@@ -1,0 +1,32 @@
+name: Daily README date
+
+on:
+  schedule:
+    - cron: "5 0 * * *" # daily at 00:05 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update README date
+        run: |
+          DATE="$(date -u +'%Y-%m-%d')"
+          perl -0777 -i -pe "s/Last updated: <!-- LAST_UPDATED -->.*?<!-- \\/LAST_UPDATED -->/Last updated: <!-- LAST_UPDATED -->$DATE<!-- \\/LAST_UPDATED -->/s" README.md
+
+      - name: Commit and push if changed
+        run: |
+          if git diff --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "chore: update README date"
+          git push
